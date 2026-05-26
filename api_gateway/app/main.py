@@ -1,19 +1,17 @@
-import os
-
 import psycopg
 import redis
 from fastapi import FastAPI
 
+from api_gateway.app.utils.logger import setup_logging, get_logger
+from api_gateway.app.utils.settings import get_settings
+
+setup_logging()
+logger = get_logger(__name__)
+settings = get_settings()
+
+
 app = FastAPI(title="API Gateway")
-
-
-def get_database_url() -> str:
-    return os.getenv("DATABASE_URL", "")
-
-
-def get_redis_url() -> str:
-    return os.getenv("REDIS_URL", "redis://localhost:6379/0")
-
+logger.info("Инициализация API")
 
 @app.get("/health")
 def health() -> dict[str, str]:
@@ -22,8 +20,8 @@ def health() -> dict[str, str]:
 
 @app.get("/health/infra")
 def health_infra() -> dict[str, str]:
-    database_url = get_database_url()
-    redis_url = get_redis_url()
+    database_url = settings.DATABASE_URL
+    redis_url = settings.REDIS_URL
 
     db_status = "ok"
     redis_status = "ok"
@@ -34,12 +32,14 @@ def health_infra() -> dict[str, str]:
                 cur.execute("SELECT 1;")
                 cur.fetchone()
     except Exception:
+        logger.info("Ошибка в инициализации бд")
         db_status = "error"
 
     try:
         redis_client = redis.Redis.from_url(redis_url, socket_connect_timeout=3)
         redis_client.ping()
     except Exception:
+        logger.info("Ошибка в инициализации редис")
         redis_status = "error"
 
     overall_status = "ok" if db_status == "ok" and redis_status == "ok" else "degraded"

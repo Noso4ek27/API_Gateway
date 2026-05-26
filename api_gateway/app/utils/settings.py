@@ -22,7 +22,17 @@ class Settings(BaseSettings):
         ,
     )
 
+@lru_cache
+def get_settings() -> Settings:
+    """
+    Возвращает экземпляр класса с настройками приложения
+
+    Returns:
+        Settings: Объект с настройками приложения
+    """
+
+    return Settings()
 
 if __name__ == "__main__":
-    settings = Settings()
+    settings = get_settings()
     print(settings)
