@@ -4,14 +4,17 @@
 from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+import asyncio
+import logging
 
 from api_gateway.app.utils.logger import get_logger, setup_logging
 from api_gateway.app.utils.settings import get_settings
 
 setup_logging()
-logger = get_logger()
+logger = get_logger(__name__)
 settings = get_settings()
 
+logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 class DataBase():
     """
     Асинхронный клиент для PostgreSQL
@@ -29,7 +32,7 @@ class DataBase():
 
         self.engine = create_async_engine(
             url = self.database_url,
-            echo = True,
+            echo = False,
             pool_pre_ping=True,
             pool_size = 10,
         )   
@@ -41,7 +44,7 @@ class DataBase():
             autoflush = False
         )
 
-        logger.info("Db were create")
+        logger.info("session init")
     
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncSession,  None]:
@@ -74,3 +77,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception as e:
             logger.exception(f"Database error: {e}")
             raise
+
+if __name__ == "__main__":
+    asyncio.run(get_db())

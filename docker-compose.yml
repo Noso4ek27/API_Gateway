@@ -7,7 +7,7 @@ services:
       - "8000:8000"
     environment:
       PYTHONPATH: /app
-      DATABASE_URL: postgresql://gateway:gateway@postgres:5432/gateway
+      DATABASE_URL: postgresql+asyncpg://gateway:gateway@postgres:5432/gateway
       REDIS_URL: redis://redis:6379/0
     volumes:
       - ./api_gateway:/app/api_gateway
@@ -24,7 +24,7 @@ services:
       POSTGRES_PASSWORD: gateway
       POSTGRES_DB: gateway
     ports:
-      - "5432:5432"
+      - "5431:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
