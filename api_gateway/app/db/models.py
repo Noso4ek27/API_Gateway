@@ -86,7 +86,7 @@ class ApiKeys(Base):
         back_populates="api_keys"
     )
 
-    request_log: Mapped["RequestLogs"] = relationship(
+    request_logs: Mapped["RequestLogs"] = relationship(
         back_populates="api_keys"
     )
 class RequestLogs(Base):

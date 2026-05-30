@@ -22,7 +22,7 @@ async def generate_api_key(lenthg: int = 32) -> str:
         key: str ключ
     """
     alphakey = string.ascii_letters + string.digits
-    return "".join(secrets.choice(alphakey) for _ in range(lenthg))
+    return "sk-".join(secrets.choice(alphakey) for _ in range(lenthg))
 
 async def hash_api_key(api_key: str) -> str:
     """
@@ -40,33 +40,6 @@ async def verify_api_key(api_key: str, api_hash_from_db: str) -> bool:
     """
     return secrets.compare_digest(hash_api_key(api_key), api_hash_from_db)
 
-async def disable_api_key(api_key: str, db: AsyncSession) -> bool: #Не проверено
-    """
-    Отключает апи ключ(флаг в бд)
-    """
-    hashed_key = hash_api_key(api_key)
-
-    try:
-        query = (select(ApiKeys)
-                .where(ApiKeys.key_hash == hashed_key,
-                ApiKeys.is_active == True))
-        result = await db.execute(query)
-        api_key_record = result.scalar_one_or_none()
-
-        if api_key_record is None:
-            logger.info("Такого ключа нет(изменение активности)")
-            return False
-            
-
-        api_key_record.is_active = False
-        logger.info(f"Ключ: {hashed_key} disable")
-        db.commit()
-        return True
-    
-    except Exception as e:
-        await db.rollback()
-        logger.exception(f"Api key status error: {e}")
-        raise
 
 if __name__ == "__main__":
     key = generate_api_key()

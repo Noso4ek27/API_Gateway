@@ -1,7 +1,7 @@
 # api_gateway/app/api/user/router.py
 # Запросы к таблице юзеров
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,11 +31,8 @@ async def create_user_endpoint(
     Returns:
         UserResponse: схема pydantic UserResponse
     """
-    try:
-        return await service.create_user(payload, db)
-    except Exception as e:
-        logger.exception(f"Creation user failed: {e}")
-        raise
+    return await service.create_user(payload, db)
+
 
 @router.get("/get", response_model=UserResponse, )      #добавить статус кода
 async def get_user_endpoint(
@@ -50,25 +47,10 @@ async def get_user_endpoint(
     Returns:
         UserResponse: схема pydantic UserResponse
     """
-    try:
-        user = await service.get_user(email, db)
-        
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with email '{email}' not found"
-            )
-            
-        return user
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Unexpected error while getting user: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+    user = await service.get_user(email, db)           
+    return user
+
+
 
 @router.delete("/delete", response_model=UserDelete, )   
 async def delete_user_endpoint(

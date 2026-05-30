@@ -37,11 +37,11 @@ class ApiKeysCreate(BaseModel):
     Структура заполнения таблицы api_keys
     user_id: UUID
     key_hash: str
-    rate_limit: int
+    rate_limit: int | None
     """
     user_id: UUID
     key_hash: str
-    rate_limit: int
+    rate_limit: int | None
 
 
 class ApiKeysResponse(ApiKeysCreate):
@@ -60,6 +60,26 @@ class ApiKeysResponse(ApiKeysCreate):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class ApiKeysResponseWithoutKey(BaseModel):
+    """
+    Структура ответа бд апи ключам.
+
+    id: UUID
+    user_id: UUID
+    key_hash: str
+    rate_limit: int
+    is_active: bool
+    created_at: datetime
+    """
+    user_id: UUID
+    rate_limit: int
+    id: UUID
+    is_active: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class RequestLogsCreate(BaseModel):
     """
