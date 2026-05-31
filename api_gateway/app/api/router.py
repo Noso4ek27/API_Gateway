@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from api_gateway.app.api.user.router import router as users_router
 from api_gateway.app.api.health.router import router as health_router
 from api_gateway.app.api.api_keys.router import router as keys_router
+from api_gateway.app.api.me.router import router as me_router
 
 router = APIRouter()
 
@@ -21,4 +22,9 @@ router.include_router(
 router.include_router(
     keys_router,
     tags=["Keys"],
+)
+
+router.include_router(
+    me_router,
+    tags=['me']
 )

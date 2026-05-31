@@ -22,7 +22,8 @@ async def generate_api_key(lenthg: int = 32) -> str:
         key: str ключ
     """
     alphakey = string.ascii_letters + string.digits
-    return "sk-".join(secrets.choice(alphakey) for _ in range(lenthg))
+    random_part = "".join(secrets.choice(alphakey) for _ in range(lenthg))
+    return f"sk-{random_part}"
 
 async def hash_api_key(api_key: str) -> str:
     """

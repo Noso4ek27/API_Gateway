@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 import asyncio
 
-from api_gateway.app.api.schemas import ApiKeysResponse, ApiKeysCreate, ApiKeysResponseWithoutKey
+from api_gateway.app.api.schemas import ApiKeysResponse, ApiKeysCreate, ApiKeysResponseWithoutKey, UserResponse
 from api_gateway.app.db.session import db_client, get_db
 from api_gateway.app.utils.logger import setup_logging, get_logger
 from api_gateway.app.db.models import Users, ApiKeys
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 async def disable_api_key(
     user_id: UUID,
     api_key_id: UUID,
-    db: AsyncSession) -> bool: #Не проверено
+    db: AsyncSession) -> bool: 
     """
     Отключает апи ключ(флаг в бд)
     """
@@ -60,7 +60,7 @@ async def create_api_key(
     try: 
         user = await get_user_UUID(user_id, db = db)
 
-        user = user.scalar_one_or_none()
+        user = user
         if user is None:
             raise UserNotFoundException(user_id = user_id)
 
@@ -114,33 +114,65 @@ async def list_api_keys(
         logger.exception(f"list api keys error: {e}")
         raise
 
+async def search_user(
+    key_hash: str,
+    db: AsyncSession
+    ) -> UserResponse:
+    """
+
+    """
+    try:
+        response = (select(ApiKeys.user_id)
+                    .select_from(ApiKeys)
+                    .where(ApiKeys.key_hash == key_hash, 
+                    ApiKeys.is_active == True,))
+        result = (await db.execute(response)).scalar_one_or_none()
+        if result is None:
+            raise UserNotFoundException(user_id = key_hash)
+        
+        response_user = (select(Users)
+                        .where(Users.id == result))
+        result_user = (await db.execute(response_user)).scalar_one_or_none()
+        if result_user is None:
+            raise UserNotFoundException(user_id = key_hash)
+
+        return UserResponse.model_validate(result_user)
+
+    except UserNotFoundException:
+        raise
+    except Exception as e:
+        raise
+
+# async def main():
+#     async with db_client.session() as session:
+#         try:
+
+#             TEST_USER_UUID = UUID("5616afd9-3be3-4c6a-97b2-7c694fbba96a") 
+            
+#             print(f"\n1. Тест создания API-ключа для юзера: {TEST_USER_UUID}")
+#             new_key_data = await create_api_key(user_id=TEST_USER_UUID, db=session)
+#             print(f"[УСПЕХ] Ключ создан!")
+#             print(f"Чистый ключ: {new_key_data.key_hash}")
+            
+#             # 2. Тестируем вывод списка ключей
+#             print(f"\n2. Тестируем получение списка ключей для юзера...")
+#             user_keys = await list_api_keys(user_id=TEST_USER_UUID, db=session)
+#             print(f"[УСПЕХ] Найдено ключей в базе: {len(user_keys)}")
+#             for k in user_keys:
+#                 print(f" - ID ключа: {k.id} | Хеш в БД: {k.key_hash[:10]}... | Активен: {k.is_active}")
+
+#             # 3. Тестируем отключение ключа
+#             print(f"\n3. Тестируем отключение созданного ключа...")
+#             disabled = await disable_api_key(api_key=new_key_data.key_hash, db=session)
+#             print(f"[РЕЗУЛЬТАТ] Ключ успешно отключен: {disabled}")
+            
+#         except UserNotFoundException as ex:
+#             print(f"[ОШИБКА] Пользователь с UUID {ex.user_id} не найден. Пропиши валидный UUID в main()!")
+#         except Exception as ex:
+#             print(f"[ОШИБКА ТЕСТИРОВАНИЯ] Что-то пошло не так: {ex}")
 async def main():
     async with db_client.session() as session:
-        try:
-
-            TEST_USER_UUID = UUID("5616afd9-3be3-4c6a-97b2-7c694fbba96a") 
-            
-            print(f"\n1. Тест создания API-ключа для юзера: {TEST_USER_UUID}")
-            new_key_data = await create_api_key(user_id=TEST_USER_UUID, db=session)
-            print(f"[УСПЕХ] Ключ создан!")
-            print(f"Чистый ключ: {new_key_data.key_hash}")
-            
-            # 2. Тестируем вывод списка ключей
-            print(f"\n2. Тестируем получение списка ключей для юзера...")
-            user_keys = await list_api_keys(user_id=TEST_USER_UUID, db=session)
-            print(f"[УСПЕХ] Найдено ключей в базе: {len(user_keys)}")
-            for k in user_keys:
-                print(f" - ID ключа: {k.id} | Хеш в БД: {k.key_hash[:10]}... | Активен: {k.is_active}")
-
-            # 3. Тестируем отключение ключа
-            print(f"\n3. Тестируем отключение созданного ключа...")
-            disabled = await disable_api_key(api_key=new_key_data.key_hash, db=session)
-            print(f"[РЕЗУЛЬТАТ] Ключ успешно отключен: {disabled}")
-            
-        except UserNotFoundException as ex:
-            print(f"[ОШИБКА] Пользователь с UUID {ex.user_id} не найден. Пропиши валидный UUID в main()!")
-        except Exception as ex:
-            print(f"[ОШИБКА ТЕСТИРОВАНИЯ] Что-то пошло не так: {ex}")
+        print(f"search_user {await search_user("348ea91a22bb78defd99bb028decd0c44147b0c2fa09ec6cb874fb23d4615651", session)}")
 
 if __name__ == "__main__":
     # Запуск асинхронного цикла для выполнения теста прямо из терминала

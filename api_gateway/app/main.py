@@ -5,6 +5,7 @@ from api_gateway.app.api.user.service import UserAlreadyExistsException, UserNot
 from api_gateway.app.utils.logger import setup_logging, get_logger
 from api_gateway.app.utils.settings import get_settings
 from api_gateway.app.api.router import router
+from api_gateway.app.middleware.auth import AuthMiddleware
 
 setup_logging()
 logger = get_logger(__name__)
@@ -14,6 +15,8 @@ logger.info("Инициализация API")
 app = FastAPI(
     title="API Gateway",
 )
+
+app.add_middleware(AuthMiddleware)
 
 @app.exception_handler(UserNotFoundException)
 async def user_not_found_handler(request: Request, exc: UserNotFoundException):
